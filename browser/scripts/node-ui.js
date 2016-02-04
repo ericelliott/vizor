@@ -896,7 +896,7 @@ NodeUI.drilldown = function(node) {	// taken from nested graph plugin
 /**
  * forces all connections to resolve their slot divs and redraws the canvas.
  * expensive and heavy-handed. use as a last resort. (gm)
- * @return bool if updateCanvas was called
+ * @return boolean if updateCanvas was called
  */
 NodeUI.redrawActiveGraph = function() {
 	var changed = false;
@@ -925,7 +925,7 @@ NodeUI.makeUIAdjustableValue = function(domNode, onStart, onChange, onEnd, optio
 	var o = _.extend({
 		min : 0.0,
 		max : 1.0,
-		step : 1.0,	// do not track X by default
+		step : 0.1,
 		size : 100,	// size of full range of control (e.g. min to max in 100px)
 		getValue : null,	// supply function to dynamically read this value from elsewhere (e.g. state)
 		value : 0.5,	// default if no getValue()
@@ -1009,11 +1009,20 @@ NodeUI.makeUIAdjustableValue = function(domNode, onStart, onChange, onEnd, optio
 
 			var delta = pos - data.last_pos
 
+			var shiftPressed = isShiftPressed(), quantize = o.step
 			if (Math.abs(delta) >= minPixels) {
 				data.last_pos = pos
-				if (isShiftPressed()) {
+				if (shiftPressed) {
 					delta /= 10.0;
+					quantize = o.step / 10
+				} else {
+					quantize = o.step
+					if ((delta > 15) || (delta < -15)) {	// above a threshold we decrease resolution
+						delta *= 5
+					}
 				}
+
+
 				var oldValue = value;
 
 				if (!data.rect) {
@@ -1026,6 +1035,7 @@ NodeUI.makeUIAdjustableValue = function(domNode, onStart, onChange, onEnd, optio
 
 				normValue = clamp(normValue, 0.0, o.size);
 				value = mapLinear(normValue, 0.0, o.size, o.min, o.max);
+				value = quantize * Math.round(value / quantize)
 
 				if ((value !== oldValue)) {
 					onChange(value, delta)
@@ -1174,8 +1184,8 @@ NodeUI.enterValueControl = function(node, parentNode, onChange, options) {
 		.css({
 			position: 'absolute',
 			width:  '' + controlWidth + 'px',
-			left: '' + (nodeOffset.left - parentOffset.left -1) + 'px',
-			top: '' + (nodeOffset.top - parentOffset.top -1) + 'px',
+			left: '' + (nodeOffset.left - parentOffset.left ) + 'px',
+			top: '' + (nodeOffset.top - parentOffset.top ) + 'px',
 			'z-index' : 3001,
 			margin: 0
 		})

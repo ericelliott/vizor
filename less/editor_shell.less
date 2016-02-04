@@ -2,6 +2,10 @@
 
 body.bEditor {
 
+  .floating-box {
+	z-index: 65;
+  }
+
   #canvases {	// considered the master viewport
 	position: absolute;
 	left: 0;
@@ -363,5 +367,60 @@ body.bEditor {
   input, textarea {
 	background: none;
 	color: white;
+  }
+}
+
+
+
+
+ul.unit-degree li>span:after {
+  content:"°";
+}
+ul.xyz {
+  li:before {
+	float:left;
+	line-height: 1.4em;
+	margin-right: 5px;
+	padding-top: 1px;
+	color:rgba(255,255,255,0.2);
+  }
+  li.xyz-x:before {content: "X";}
+  li.xyz-y:before {content: "Y";}
+  li.xyz-z:before {content: "Z";}
+}
+
+
+.propertiesContent {
+
+  ul.xyz {
+	display: flex;
+	display: -webkit-flex;
+	padding-left: 0px;
+	li {
+	  -webkit-flex: 1;
+	  flex: 1;
+	  span {
+		background: rgba(255,255,255,0.1);
+		display: block;
+		line-height: 1.4em;
+		padding: 1px;
+		overflow: hidden;
+	  }
+	}
+	>li:first-child {
+	  padding-right: 5px;
+	}
+	>li:nth-child(2) {
+	  padding: 0 5px;
+	}
+	>li:last-child {
+	  padding-left: 5px;
+	}
+
+  }
+
+  .noSelection {
+	color: rgba(255,255,255,0.3);
+	text-align: center;
   }
 }

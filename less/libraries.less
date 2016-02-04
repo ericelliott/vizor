@@ -1,11 +1,15 @@
 .presets-block {
 	left: 30px;
-    z-index: 65;
+
 }
 
 .assets-block {
     left: 30 + @floating-box-width + 30;
-    z-index: 64;
+
+}
+.properties-block {
+    right: 230px;
+    top: 30px;
 }
 
 ul.lib-tabs {
@@ -241,6 +245,26 @@ ul.assets-list {
             float: left;
             padding: 0 0 0 18px; 
             color: @chat-text-color;
+        }
+    }
+}
+
+#properties-panel {
+    .propertiesContent {
+        section {
+            padding: 10px 15px;
+            ul {
+                padding:0;
+            }
+        }
+        h4 {
+            .clearfix;
+            font-size: 100%;
+            margin:0 0 5px 0;
+            button {
+                float:right;
+                height: 16px;
+            }
         }
     }
 }

@@ -20,6 +20,14 @@ var GraphPlugin = E2.plugins.graph = function(core) {
 
 GraphPlugin.prototype = Object.create(SubGraphPlugin.prototype)
 
+GraphPlugin.prototype.getInspectorProperties = function() {
+	var s = this.state
+	return {
+		get always_update() { return s.always_update },
+		set always_update(v) { s.always_update = v; return s.always_update; }
+	}
+}
+
 GraphPlugin.prototype.open_inspector = function(self) {
 	var diag = make('div')
 	var always_upd = $('<input id="always_upd" name="alwaysupdate"'

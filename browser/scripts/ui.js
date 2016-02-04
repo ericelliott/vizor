@@ -13,9 +13,8 @@ VizorUI.prototype.setupEventHandlers = function(e2, dom) {
 	dom.btnPresets.click(this.onBtnPresetsClicked.bind(this));
 	dom.btnChatDisplay.click(this.onBtnChatClicked.bind(this));
 	dom.btnHideAll.click(this.onBtnHideAllClicked.bind(this));
-	dom.btnInspector.click(this.onInspectorClicked.bind(this));
+	dom.btnInspector.click(this.onBtnInspectorClicked.bind(this));
 	dom.btnEditorCam.click(this.enterEditorView.bind(this));
-
 	dom.btnVRCam.click(this.enterVRView.bind(this));
 
 
@@ -70,10 +69,12 @@ VizorUI.prototype.setupEventHandlers = function(e2, dom) {
 	dom.chatToggleButton.click(makeCollapseHandler('chat'));
 	dom.assetsToggle.click(makeCollapseHandler('assets'));
 	dom.presetsToggle.click(makeCollapseHandler('presets'));
+	dom.propertiesToggle.click(makeCollapseHandler('properties'));
 
 	dom.assetsClose.click(this.closePanelAssets.bind(this));
 	dom.presetsClose.click(this.closePanelPresets.bind(this));
 	dom.chatClose.click(this.closePanelChat.bind(this));
+	dom.propertiesClose.click(this.closePanelProperties.bind(this));
 
 	dom.publishButton.click(function() {
 		E2.app.onPublishClicked()
@@ -83,6 +84,7 @@ VizorUI.prototype.setupEventHandlers = function(e2, dom) {
 		that.state.panelStates[which] = VizorUI.getDomPanelState(domElement);
 	}
 	// drag handlers, for when the panels are dragged
+	dom.propertiesPanel.on(uiEvent.moved, function(){  updatePanelState('properties', dom.propertiesPanel)   });
 	dom.assetsLib.on(uiEvent.moved, function(){  updatePanelState('assets', dom.assetsLib)   });
 	dom.presetsLib.on(uiEvent.moved, function(){ updatePanelState('presets', dom.presetsLib) });
 	dom.chatWindow
@@ -109,6 +111,7 @@ VizorUI.prototype.setupEventHandlers = function(e2, dom) {
 
 };
 
+
 VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 	e2.app.onWindowResize();
 
@@ -117,9 +120,14 @@ VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 	var that = this;
 	var dom = this.dom;
 
+	dom.propertiesPanel = $('#properties-panel');
+	dom.propertiesClose = $('#properties-close', dom.propertiesPanel)
+	dom.propertiesToggle = $('#properties-toggle', dom.propertiesPanel)
+
 	this.state.panelStates.assets = VizorUI.getDomPanelState(dom.assetsLib);
 	this.state.panelStates.presets = VizorUI.getDomPanelState(dom.presetsLib);
 	this.state.panelStates.chat = VizorUI.getDomPanelState(dom.chatWindow);
+	this.state.panelStates.properties = VizorUI.getDomPanelState(dom.propertiesPanel);
 
 
 	dom.btnBuildMode = $('#buildModeBtn');
@@ -130,6 +138,7 @@ VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 	dom.btnHideAll = $('#btn-hide-all');
 
 
+
 	var presetsTabs = jQuery('#presets-lib div.block-header ul.nav-tabs li');
 	dom.tabPresets = presetsTabs.find("a[href='#presets']").parent();
 	dom.tabObjects = presetsTabs.find("a[href='#objects']").parent();
@@ -137,8 +146,10 @@ VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 	var shaderBlock = $('.shader-block')
 	shaderBlock.movable()
 
+	// drag dragging handlers
 	dom.presetsLib.movable();
 	dom.assetsLib.movable();
+	dom.propertiesPanel.movable();
 
 	var chatUsersHeight = jQuery('.chat-users').height();
 
@@ -168,13 +179,15 @@ VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 	if (dom.assetsLib.length < 1) this.state.visibility.panel_assets = false;
 
 	this.setupEventHandlers(e2,this.dom);
+
+	this.propertiesPanel = new UIProperties(jQuery('#propertiesPane', dom.propertiesPanel))
+
 	this.setupStateStoreEventListeners();
 	this.state.allowStoreOnChange = true;
 
 	this.pluginDocsCache = new PluginDocsCache()
 
 	this._initialised = true;
-
 	this.emit(uiEvent.initialised, this);
 }
 
@@ -288,6 +301,11 @@ VizorUI.prototype.onBtnPresetsClicked = function() {
 	return false;
 }
 
+VizorUI.prototype.onBtnInspectorClicked = function() {
+	this.state.visibility.panel_properties = !this.state.visibility.panel_properties
+	return false
+}
+
 VizorUI.prototype.onBtnAssetsClicked = function() {
 	this.state.visibility.panel_assets = !this.state.visibility.panel_assets;
 	return false;
@@ -353,6 +371,11 @@ VizorUI.prototype.closePanelChat = function() {
 	return false;
 }
 
+VizorUI.prototype.closePanelProperties = function() {
+	this.state.visibility.panel_properties = false;
+	return false;
+}
+
 VizorUI.prototype.closePanelAssets = function() {
 	this.state.visibility.panel_assets = false;
 	return false;
@@ -407,7 +430,13 @@ VizorUI.prototype.togglePanelPresetsCollapsed = function() {
 	this.dom.presetsToggle.trigger('click');
 }
 
+VizorUI.prototype.togglePanelPropertiesCollapsed = function() {
+	this.dom.propertiesToggle.trigger('click');
+}
+
+
 VizorUI.prototype.onInspectorClicked = function() {
+	console.error('ON INSPECTOR CLICKED')
 	var app = E2.app;
 	if (app.selectedNodes.length===1) {
 		if (app.selectedNodes[0].ui.hasPreferences()) {
@@ -509,10 +538,11 @@ VizorUI.prototype.setModeProgram = function() {
 VizorUI.prototype.buildBreadcrumb = function(graph, beforeRender) {
 	var b = new UIbreadcrumb()
 	function buildBreadcrumb(parentEl, graph, add_handler) {
+		var title = graph.tree_node.title || graph.tree_node.id
 		if (add_handler) {
-			b.prepend(graph.tree_node.title, null, function() { graph.tree_node.activate() })
+			b.prepend(title, null, function() { graph.tree_node.activate() })
 		} else {
-			b.prepend(graph.tree_node.title, null)
+			b.prepend(title, null)
 		}
 		if (graph.parent_graph)
 			buildBreadcrumb(parentEl, graph.parent_graph, true)

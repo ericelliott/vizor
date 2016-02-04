@@ -1,0 +1,90 @@
+<div class="propertiesContent obj3d">
+    <style>
+        .propertiesContent svg, .propertiesContent svg use {stroke: #fff; fill: #fff;}
+    </style>
+    <section class="collapsible" id="propertiesSectionPosition">
+       <h4>
+           Position
+           <button id="propertiesResetPosition" class="svg tiny" data-svgref="icon-properties-reset" />
+       </h4>
+       {{#with properties.position}}
+       <ul class="collapsible-content xyz uiAdjustable">
+           <li class="xyz-x">
+               <span id="propertiesPositionX" data-tab-next="propertiesPositionY">{{x}}</span>
+           </li>
+           <li class="xyz-y">
+               <span id="propertiesPositionY" data-tab-next="propertiesPositionZ">{{y}}</span>
+           </li>
+           <li class="xyz-z">
+               <span id="propertiesPositionZ" data-tab-next="propertiesRotationX">{{z}}</span>
+           </li>
+       </ul>
+       {{/with}}
+    </section>
+
+    <section class="collapsible" id="propertiesSectionRotation">
+       <h4>
+           Rotation
+           <button id="propertiesResetRotation" class="svg tiny" data-svgref="icon-properties-reset" />
+       </h4>
+       {{#with properties.rotation}}
+       <ul class="collapsible-content xyz uiAdjustable unit-degree">
+           <li class="xyz-x">
+               <span id="propertiesRotationX" data-tab-next="propertiesRotationY">{{x}}</span>
+           </li>
+           <li class="xyz-y">
+               <span id="propertiesRotationY" data-tab-next="propertiesRotationZ">{{y}}</span>
+           </li>
+           <li class="xyz-z">
+               <span id="propertiesRotationZ" data-tab-next="propertiesScaleX">{{z}}</span>
+           </li>
+       </ul>
+       {{/with}}
+    </section>
+
+    <section class="collapsible" id="propertiesSectionScale">
+       <h4>
+           Scale
+           <button id="propertiesResetScale" class="svg tiny" data-svgref="icon-properties-reset" />
+           <button id="propertiesLinkScale" class="svg tiny" data-svgref="icon-properties-link" />
+       </h4>
+       {{#with properties.scale}}
+       <ul class="collapsible-content xyz uiAdjustable {{#if ../state.scaleTransformLinked}}transformGrouped{{/if}}">
+           <li class="xyz-x">
+               <span id="propertiesScaleX" data-tab-next="propertiesScaleY">{{x}}</span>
+           </li>
+           <li class="xyz-y">
+               <span id="propertiesScaleY" data-tab-next="propertiesScaleZ">{{y}}</span>
+           </li>
+           <li class="xyz-z">
+               <span id="propertiesScaleZ">{{z}}</span>
+           </li>
+       </ul>
+       {{/with}}
+    </section>
+
+
+    <section class="collapsible" id="propertiesSectionCommon">
+        <!-- h4>Common</h4 -->
+        {{#with properties.common}}
+
+        <label for="propertiesObjectName">Name: </label>
+
+        <input
+            {{#unless canEditName}}
+                disabled
+            {{/unless}}
+            id="propertiesObjectName" class="collapsible-content" type="text" value="{{objectName}}" placeholder="(object name)" />
+
+        <label>
+            <input
+                {{#unless canLockTransformControls}}
+                    disabled
+                {{/unless}}
+                id="propertiesEnableTransform" type="checkbox" {{#if enableTransformControls}}checked{{/if}} />
+            Enable transforms
+        </label>
+        {{/with}}
+    </section>
+
+</div>
