@@ -719,6 +719,7 @@ VizorUI.prototype.onKeyDown = function(e) {
 			e.preventDefault();
 			e.stopPropagation();
 			E2.app.undoManager.redo();
+			this.emit('redo')
 			break;
 	}
 	return true;

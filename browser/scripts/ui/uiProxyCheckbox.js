@@ -7,16 +7,17 @@ UICheckbox.prototype.constructor = UICheckbox
 UICheckbox.prototype.getAdapter = function(obj, propertyName){
 	var that = this
 	return {
-		get value() {
+		get sourceValue() {
 			return !!obj[propertyName]
 		},
-		set value(v) {
-			obj[propertyName] = v
-			this.updateView()
-			return v
+		set sourceValue(v) {
+			return obj[propertyName] = !!v
 		},
-		updateView: function () {
-			that.element.checked = this.value
+		get targetValue() {
+			return that.element.checked
+		},
+		set targetValue(v) {
+			return that.element.checked = !!v
 		}
 	}
 }
@@ -29,8 +30,4 @@ UICheckbox.prototype.newElement = function() {
 
 UICheckbox.prototype.checkValidElement = function(domElement) {
 	 return (domElement.tagName === 'INPUT')  &&  (domElement.getAttribute('type') === 'checkbox')
-}
-
-UICheckbox.prototype.onViewChange = function(e) {
-	this.adapter.value = e.target.checked
 }

@@ -278,7 +278,6 @@ var UiState = function(persistentStorageRef, context) {
 		var old = this[which]
 		if (value === old) return value
 
-		console.log('panel logic', which, value)
 		var panels = ['panel_assets', 'panel_presets', 'panel_properties', 'panel_chat']
 		var ix = panels.indexOf(which)
 		if (ix === -1) {
@@ -292,7 +291,7 @@ var UiState = function(persistentStorageRef, context) {
 		that.emit('_internal:visibility:' + which, value)
 		if (value && !oldFloatingPanels) {
 			for (var p in panels) {
-				this[p] = false
+				this[panels[p]] = false
 			}
 		}
 		var vv = this[which]
