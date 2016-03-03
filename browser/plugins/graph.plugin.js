@@ -19,6 +19,7 @@ var GraphPlugin = E2.plugins.graph = function(core) {
 }
 
 GraphPlugin.prototype = Object.create(SubGraphPlugin.prototype)
+GraphPlugin.prototype.constructor = GraphPlugin
 
 GraphPlugin.prototype.getInspectorProperties = function() {
 	var s = this.state
