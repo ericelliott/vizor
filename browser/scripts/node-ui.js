@@ -174,8 +174,8 @@ function NodeUI(parent_node, x, y, z) {
 		that.parent_node.update_connections()
 		E2.app.updateCanvas(true)
 	})
-	// @todo this fails?
-	this.parent_node.parent_graph.addListener('nodeRenamed', this.onRenamed.bind(this));
+
+	this.parent_node.addListener('renamed', this.onRenamed.bind(this));
 
 	make_draggable($dom,
 		E2.app.onNodeDragged.bind(E2.app, parent_node),
@@ -279,11 +279,9 @@ NodeUI.prototype.destroy = function() {
 	return this;
 }
 
-NodeUI.prototype.onRenamed = function(graph, node) {
-	if (node === this.parent_node) {
-		this.setCssClass();
-	}
-	return true;
+NodeUI.prototype.onRenamed = function() {
+	this.setCssClass()
+	return true
 }
 
 NodeUI.prototype.openInspector = function() {

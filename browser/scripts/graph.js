@@ -161,6 +161,7 @@ Graph.prototype.removeNode = function(node) {
 Graph.prototype.renameNode = function(node, title) {
 	node.title = title
 	this.emit('nodeRenamed', node)
+	node.emit('renamed', title)
 }
 
 Graph.prototype.addConnection = function(connection) {
