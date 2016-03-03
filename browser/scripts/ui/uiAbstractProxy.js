@@ -23,11 +23,11 @@ var UIAbstractProxy = function(obj, propertyName, domElement, onChange) {
 	this.element.dataset.uid = this.uid
 
 	this.adapter = this._getAdapter(obj, propertyName)
-	this.adapter.targetValue = this.adapter.sourceValue
+	this.adapter.uiValue = this.adapter.sourceValue
 
-	this._onTargetChange = function(e){
-		if (this.adapter.targetValue !== this.adapter.sourceValue) {	// blur triggers onchange. avoid it.
-			this.onTargetChange(e)
+	this._onUIChange = function(e){
+		if (this.adapter.uiValue !== this.adapter.sourceValue) {	// blur triggers onchange. avoid it.
+			this.onUIChange(e)
 			if (onChange) onChange(e)
 		}
 	}.bind(this)
@@ -42,7 +42,7 @@ UIAbstractProxy.prototype._getAdapter = function(obj, propertyName) {
 	Object.defineProperty(a, 'value', {
 		set: function (v) {
 			this.sourceValue = v
-			return this.targetValue = this.sourceValue
+			return this.uiValue = this.sourceValue
 		},
 		get: function() {
 			return this.sourceValue
@@ -52,23 +52,23 @@ UIAbstractProxy.prototype._getAdapter = function(obj, propertyName) {
 }
 
 UIAbstractProxy.prototype._update = function() {
-	this.adapter.targetValue = this.adapter.sourceValue
+	this.adapter.uiValue = this.adapter.sourceValue
 }
 
 UIAbstractProxy.prototype._attach = function() {
-	this.element.addEventListener('change', this._onTargetChange)
+	this.element.addEventListener('change', this._onUIChange)
 }
 
 UIAbstractProxy.prototype._detach = function() {
-	this.element.removeEventListener('change', this._onTargetChange)
+	this.element.removeEventListener('change', this._onUIChange)
 }
 
 /* overloaded methods */
 UIAbstractProxy.prototype.getAdapter = function(obj, propertyName){console.error('must override getAdapter')}
 UIAbstractProxy.prototype.checkValidElement = function() {return true}
 /* end overloaded methods */
-UIAbstractProxy.prototype.onTargetChange = function() {
-	this.adapter.sourceValue = this.adapter.targetValue
+UIAbstractProxy.prototype.onUIChange = function() {
+	this.adapter.sourceValue = this.adapter.uiValue
 	if (this.element.blur) this.element.blur()
 }
 

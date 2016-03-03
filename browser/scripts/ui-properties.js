@@ -1,11 +1,15 @@
 // -> create -> (reset: -> detach) -> select -> init -> render -> attach -> done
 
 var rad2deg = 180 / 3.14159265358
-var UIProperties = function(domElement) {
-	EventEmitter.apply(this, arguments)
-	domElement = domElement || document.getElementById('propertiesPane')
 
-	var that = this;
+var UIObjectProperties = function(domElement) {
+	UIAbstractProperties.apply(this, arguments)
+
+	var that = this
+
+	this.template = E2.views.partials.editor.objectProperties
+
+	domElement = domElement || document.getElementById('obj3dPropertiesPane')
 
 	this.dom = {	// elements
 		container: $(domElement),
@@ -19,37 +23,27 @@ var UIProperties = function(domElement) {
 		}
 	}
 
-	// holds references to UI controls tied to this.adapter properties
 	this.controls = {
 		scaleLinked : null,
 		enableTransformControls : null,
 		objectName : null
 	}
 
-	this._nodes = null	// holds selection
-	Object.defineProperty(this, 'selected', {
-		get: function() {
-			return this._nodes
-		},
-		set: function(nodes) {
-			this.setSelected(nodes)
-		}
-	})
-	Object.defineProperty(this, 'isInBuildMode', {
-		get: function() {
-			return E2.ui.isInBuildMode()
-		}
-	})
+	E2.ui.on('worldeditor:selectionset', this.onObjectPicked.bind(this))
+	E2.app.worldEditor.cameraSelector.transformControls.addEventListener('objectChange', this.onSelectedObjectChangedState.bind(this))
 
-	Object.defineProperty(this, 'selectedIsCamera', {
-		get: function() {
-			var sel = that.getSelectedSingleRef()
-			return sel && (sel.id === 'three_vr_camera')
-		}
-	})
-	
+	this.emit('created')
+	this.render()
+}
 
-	var objectFormatter = function() {
+UIObjectProperties.prototype = Object.create(UIAbstractProperties.prototype)
+UIObjectProperties.prototype.constructor = UIObjectProperties
+
+UIObjectProperties.prototype.getAdapter = function() {
+
+	var that = this
+
+	var objectFormatter = function() {	// chew data for handlebars
 		return {
 			linked: 	this.linked,
 			enabled : 	this.enabled,
@@ -59,7 +53,7 @@ var UIProperties = function(domElement) {
 		}
 	}
 
-	this.adapter = {
+	var adapter = {
 		position: {
 			get enabled() {
 				var s = that.getSelectedSingleRef()
@@ -94,7 +88,7 @@ var UIProperties = function(domElement) {
 				var s = that.getSelectionStatePtr()
 				if (!(s && s.quaternion)) return null
 				s.quaternion = q
-				that.selected[0].updated = true
+				that.selected[0].transientSetState('quaternion', s.quaternion)
 				return q
 			},
 			get vec3() {	// radians
@@ -148,6 +142,10 @@ var UIProperties = function(domElement) {
 			return this.rotation
 		},
 		common : {
+			get enabled() {
+				var s = that.getSelectedSingleRef()
+				return !!s
+			},
 			get canLockTransformControls() {
 				return true
 			},
@@ -179,7 +177,7 @@ var UIProperties = function(domElement) {
 	// mods w/o conversion
 	;['position', 'scale'].forEach(function(property){
 		['x', 'y', 'z'].forEach(function(xyz) {
-			Object.defineProperty(that.adapter[property], xyz, {
+			Object.defineProperty(adapter[property], xyz, {
 				get: function () {
 					var s = that.getSelectionStatePtr()
 					if (!(s && s[property])) return 0.0
@@ -208,101 +206,32 @@ var UIProperties = function(domElement) {
 						s[property][xyz] = v
 						that.dom[property][xyz].innerText = this.format(v)
 					}
-					that.selected[0].updated = true
+					that.selected[0].transientSetState(property, s[property])
 				}
 			})
 		});
 	});
 
-	this.selected = []
-
-	E2.ui.on('worldeditor:selectionset', this.onObjectPicked.bind(this))
-	E2.app.worldEditor.cameraSelector.transformControls.addEventListener('objectChange', this.onSelectedObjectChangedState.bind(this))
-	E2.ui.on('undo', this.onUndo.bind(this))
-	E2.ui.on('redo', this.onUndo.bind(this))
-
-	this.emit('created')
-	this._render()
-
-	E2.ui.state.on('changed:mode', this.onModeChanged.bind(this))
-	E2.ui.state.on('changed:selectedObjects', this.onSelectedNodeChanged.bind(this))
+	return adapter
+}
+UIObjectProperties.prototype.onReset = function() {
+	this.adapter.rotation._vec3 = null
+}
+UIObjectProperties.prototype.render = function() {
+	this.adapter.rotation._vec3 = null	// force refresh
+	return UIAbstractProperties.prototype.render.call(this, arguments)
 }
 
-UIProperties.prototype = Object.create(EventEmitter.prototype)
-
-UIProperties.defaultState = {
-	enabled				 : false,
-	scaleTransformLinked : true
-}
-
-UIProperties.prototype.getSelectedNodeRef = function() {
-	return (E2.ui.state.selectedObjects.length === 1) ? E2.ui.state.selectedObjects[0] : null
-}
-
-UIProperties.prototype.getSelectedSingleRef = function() {
-	return (this.selected && this.selected.length && this.selected.length === 1 && this.selected[0])  ? this.selected[0] : null
-}
-
-UIProperties.prototype.getSelectionStatePtr = function() {
-	return (this.selected && this.selected.length && this.selected.length>0)  ? this.selected[0].state : null
-}
-
-UIProperties.prototype.onSelectedObjectChangedState = function() {
-	if (!(this.selected && (this.selected.length > 0))) return
-	this.update()
-}
-
-UIProperties.prototype.onSelectedNodeChanged = function(selected) {
-	//if (!(this.selected && (this.selected.length > 0))) return
-	//this._render()
-	//console.log('selected node changed ', selected)
-}
-
-UIProperties.prototype.onModeChanged = function() {
-	this._render()
-}
-
-UIProperties.prototype.onUndo = function() {
-	if (!(this.selected && (this.selected.length > 0))) return
-	this._render()
-}
-
-UIProperties.prototype.onObjectPicked = function(selected) {
-	if (!this.isInBuildMode) return
+UIObjectProperties.prototype.onObjectPicked = function() {
 	var o = E2.app.worldEditor.getSelectedObjectPlugin()
 	if (o)
 		this.selected = [o]
 	else
 		this.selected = []
-	this._render()
+	this.render()
 }
 
-UIProperties.prototype._detach = function() {
-	$('*', this.dom).off('.uiProperties')
-
-	// proxy things
-	if (this.controls.enableTransformControls) {
-		this.controls.enableTransformControls.destroy()
-		this.controls.enableTransformControls = null
-	}
-	if (this.controls.objectName) {
-		this.controls.objectName.destroy()
-		this.controls.objectName = null
-	}
-
-	if (this.controls.scaleLinked) {
-		this.controls.scaleLinked.destroy()
-		this.controls.scaleLinked = null
-	}
-
-	return this
-}
-
-UIProperties.prototype._attachForPatchEditor = function() {
-	return false
-}
-
-UIProperties.prototype._attachFor3dEditor = function() {
+UIObjectProperties.prototype.onAttach = function() {
 	var o = {}, that = this
 
 	if (! (this.getSelectedSingleRef() && this.getSelectionStatePtr())) {
@@ -315,17 +244,21 @@ UIProperties.prototype._attachFor3dEditor = function() {
 		secPosition = document.getElementById('propertiesSectionPosition'),
 		secScale 	= document.getElementById('propertiesSectionScale')
 
-	var positionFields = secPosition.getElementsByTagName('span')
-	this.dom.position.x = positionFields[0]
-	this.dom.position.y = positionFields[1]
-	this.dom.position.z = positionFields[2]
-	this.dom.position.reset = document.getElementById('propertiesResetPosition')
+	if (secPosition) {
+		var positionFields = secPosition.getElementsByTagName('span')
+		this.dom.position.x = positionFields[0]
+		this.dom.position.y = positionFields[1]
+		this.dom.position.z = positionFields[2]
+		this.dom.position.reset = document.getElementById('propertiesResetPosition')
+	}
 
-	var rotationFields = secRotation.getElementsByTagName('span')
-	this.dom.rotation.x = rotationFields[0]
-	this.dom.rotation.y = rotationFields[1]
-	this.dom.rotation.z = rotationFields[2]
-	this.dom.rotation.reset = document.getElementById('propertiesResetRotation')
+	if (secRotation) {
+		var rotationFields = secRotation.getElementsByTagName('span')
+		this.dom.rotation.x = rotationFields[0]
+		this.dom.rotation.y = rotationFields[1]
+		this.dom.rotation.z = rotationFields[2]
+		this.dom.rotation.reset = document.getElementById('propertiesResetRotation')
+	}
 
 	if (secScale) {
 		var scaleFields = secScale.getElementsByTagName('span')
@@ -368,167 +301,171 @@ UIProperties.prototype._attachFor3dEditor = function() {
 		NodeUI.makeUIAdjustableValue(domElement, onStart, onChange, onEnd, o)
 	}
 
-	enableEntry(this.dom.position.x, 'position', 'x')
-	enableEntry(this.dom.position.y, 'position', 'y')
-	enableEntry(this.dom.position.z, 'position', 'z')
+	if (this.adapter.position.enabled) {
+		enableEntry(this.dom.position.x, 'position', 'x')
+		enableEntry(this.dom.position.y, 'position', 'y')
+		enableEntry(this.dom.position.z, 'position', 'z')
 
-	if (secScale && this.selected[0].state.scale) { // camera has no scale
+		$(this.dom.position.reset).on('click.uiProperties', function(e){
+			e.preventDefault()
+			e.stopPropagation()
+			var s = that.getSelectionStatePtr(),
+				o = that.getSelectedSingleRef()
+			if (!s) return false
+			var prop = 'position', undo = _.cloneDeep(s[prop])
+
+			var pos = that.adapter.position
+			if (!that.selectedIsCamera) {
+				pos.x = pos.z = 0
+				pos.y = 2
+			} else {
+				pos.x = 0
+				pos.y = 0.8
+				pos.z = 2
+			}
+
+			o.undoableSetState(prop, s[prop], undo)
+			return false
+		})
+
+	}
+
+	if (this.adapter.scale.enabled) {
 		enableEntry(this.dom.scale.x, 'scale', 'x')
 		enableEntry(this.dom.scale.y, 'scale', 'y')
 		enableEntry(this.dom.scale.z, 'scale', 'z')
 		this.controls.scaleLinked = new UIToggleButton(this.adapter.scale, 'linked', this.dom.scale.linked)
+
+		$(this.dom.scale.reset).on('click.uiProperties', function(e){
+			e.preventDefault()
+			e.stopPropagation()
+			var s = that.getSelectionStatePtr(),
+				o = that.getSelectedSingleRef()
+			if (!s) return false
+			var prop = 'scale', undo = _.cloneDeep(s[prop])
+
+			var scale = that.adapter.scale
+			var l = scale.linked
+			scale.linked = false
+			scale.x = scale.y = scale.z = 1
+			scale.linked = l
+
+			o.undoableSetState(prop, s[prop], undo)
+			return false
+		})
 	}
 
-	// rotation
-	o.min = -36000.0
-	o.max = 36000.0
-	o.size = 72000	// 1px per deg
+	if (this.adapter.rotation.enabled) {
+		// rotation
+		o.min = -36000.0
+		o.max = 36000.0
+		o.size = 72000	// 1px per deg
 
-	enableEntry(this.dom.rotation.x, 'quaternion', 'x', o)	// undoManager needs correct name of property here
-	enableEntry(this.dom.rotation.y, 'quaternion', 'y', o)
-	enableEntry(this.dom.rotation.z, 'quaternion', 'z', o)
+		enableEntry(this.dom.rotation.x, 'quaternion', 'x', o)	// undoManager needs correct name of property here
+		enableEntry(this.dom.rotation.y, 'quaternion', 'y', o)
+		enableEntry(this.dom.rotation.z, 'quaternion', 'z', o)
+		$(this.dom.rotation.reset).on('click.uiProperties', function(e){
+			e.preventDefault()
+			e.stopPropagation()
+			var s = that.getSelectionStatePtr(),
+				o = that.getSelectedSingleRef()
+			if (!s) return false
+			var prop = 'quaternion', undo = _.cloneDeep(s[prop])
 
+			var rot = that.adapter.rotation
+			rot.x = rot.y = rot.z = 0
 
-	if (this.dom.common.objectName && (!this.selectedIsCamera)) {
-		this.controls.objectName = new UITextbox(this.adapter.common, 'objectName', this.dom.common.objectName)
-		if (this.dom.common.enableTransformControls) {
-			this.controls.enableTransformControls = new UICheckbox(this.adapter.common, 'enableTransformControls', this.dom.common.enableTransformControls)
-		}
-	} else {
-		this.dom.common.objectName.value = '(camera)'
-		this.dom.common.objectName.disabled = true
-		this.dom.common.enableTransformControls.checked = true
-		this.dom.common.enableTransformControls.disabled = true
+			o.undoableSetState(prop, s[prop], undo)
+			return false
+		})
 	}
 
-	$(this.dom.scale.reset).on('click.uiProperties', function(e){
-		e.preventDefault()
-		e.stopPropagation()
-		var s = that.getSelectionStatePtr(),
-			o = that.getSelectedSingleRef()
-		if (!s) return false
-		var prop = 'scale', undo = _.cloneDeep(s[prop])
 
-		var scale = that.adapter.scale
-		var l = scale.linked
-		scale.linked = false
-		scale.x = scale.y = scale.z = 1
-		scale.linked = l
-
-		o.undoableSetState(prop, s[prop], undo)
-		return false
-	})
-
-	$(this.dom.rotation.reset).on('click.uiProperties', function(e){
-		e.preventDefault()
-		e.stopPropagation()
-		var s = that.getSelectionStatePtr(),
-			o = that.getSelectedSingleRef()
-		if (!s) return false
-		var prop = 'quaternion', undo = _.cloneDeep(s[prop])
-
-		var rot = that.adapter.rotation
-		rot.x = rot.y = rot.z = 0
-
-		o.undoableSetState(prop, s[prop], undo)
-		return false
-	})
-
-	$(this.dom.position.reset).on('click.uiProperties', function(e){
-		e.preventDefault()
-		e.stopPropagation()
-		var s = that.getSelectionStatePtr(),
-			o = that.getSelectedSingleRef()
-		if (!s) return false
-		var prop = 'position', undo = _.cloneDeep(s[prop])
-
-		var pos = that.adapter.position
-		if (!that.selectedIsCamera) {
-			pos.x = pos.z = 0
-			pos.y = 2
+	if (this.adapter.common.enabled) {
+		if (this.dom.common.objectName && !this.selectedIsCamera) {
+			this.controls.objectName = new UITextField(this.adapter.common, 'objectName', this.dom.common.objectName)
+			if (this.dom.common.enableTransformControls) {
+				this.controls.enableTransformControls = new UICheckbox(
+					this.adapter.common, 'enableTransformControls',
+					this.dom.common.enableTransformControls, that.render.bind(that))
+			}
 		} else {
-			pos.x = 0
-			pos.y = 0.8
-			pos.z = 2
+			this.dom.common.objectName.value = '(camera)'
+			this.dom.common.objectName.disabled = true
+			this.dom.common.enableTransformControls.checked = true
+			this.dom.common.enableTransformControls.disabled = true
 		}
 
-		o.undoableSetState(prop, s[prop], undo)
-		return false
-	})
-}
+		var node = this.getSelectedNodeRef()
+		if (node) {
+			var onRenamed = function() {
+				that.controls.objectName.onSourceChange()
+			}
+			node.on('renamed', onRenamed)
+			this.detachQueue.push(function(){node.off('renamed', onRenamed)})
+		}
 
-UIProperties.prototype._attach = function() {
-	if (this.isInBuildMode)
-		return this._attachFor3dEditor()
-	else
-		return this._attachForPatchEditor()
-
-}
-
-UIProperties.prototype._reset = function() {	// resets handling, clears interface
-	this._nodes = []
-	this.adapter.rotation._vec3 = null
-	this._detach()
-	this.emit('reset')
-	return this
-}
-
-
-UIProperties.prototype.setSelected = function(nodes) {
-	if (!(nodes && (typeof nodes.length !== 'undefined')))
-		return msg('ERROR: expected node[] for selection')
-	this._reset()
-	this._nodes = nodes
-	this.emit('selected', {nodes: nodes})
-	return this
-}
-
-UIProperties.prototype.getTemplate = function() {
-	return this.isInBuildMode ? E2.views.partials.editor.properties : E2.views.partials.editor.nodeInspector
-}
-
-UIProperties.prototype.getTemplateData = function() {
-	return {
-		position : 	this.adapter.position.getFormattedObject(),
-		rotation : 	this.adapter.rotation.getFormattedObject(),
-		scale : 	this.adapter.scale.getFormattedObject(),
-		common : 	this.adapter.common
+		var mesh = this.getSelectedSingleRef()
+		if (mesh) {
+			var meshNode = mesh.node
+			var update = this.update.bind(this)
+			meshNode.on('pluginStateChanged', update)
+			this.detachQueue.push(function () {
+				meshNode.off('pluginStateChanged', update)
+			})
+		}
 	}
 }
 
-UIProperties.prototype._render = function() {	// hard-resets panel clearing container and rerendering template
-	this._detach()
 
-	this.adapter.rotation._vec3 = null	// force refresh
+UIObjectProperties.prototype.onDetach = function() {
 
-	var template = this.getTemplate()
-	var props = this.getTemplateData()
+	// proxy things
+	if (this.controls.enableTransformControls) {
+		this.controls.enableTransformControls.destroy()
+		this.controls.enableTransformControls = null
+	}
+	if (this.controls.objectName) {
+		this.controls.objectName.destroy()
+		this.controls.objectName = null
+	}
 
-	this.dom.container.empty()
-	this.dom.container
-		.html(template({
-			properties: props
-		}))
-		.toggleClass('build', this.isInBuildMode)
-		.toggleClass('program', !this.isInBuildMode)
-	VizorUI.replaceSVGButtons(this.dom.container)
+	if (this.controls.scaleLinked) {
+		this.controls.scaleLinked.destroy()
+		this.controls.scaleLinked = null
+	}
 
-	this._attach()
-	this.emit('rendered', {obj: this.selected})
-	return this
 }
 
-UIProperties.prototype.update = function() {	// soft updates the template already in place
+
+
+UIObjectProperties.prototype.getTemplateData = function() {
 	var that = this
-	this.adapter.rotation._vec3 = null
+	return {
+		position : 	that.adapter.position.getFormattedObject(),
+		rotation : 	that.adapter.rotation.getFormattedObject(),
+		scale : 	that.adapter.scale.getFormattedObject(),
+		common : 	that.adapter.common
+	}
+}
+
+
+UIObjectProperties.prototype.update = function() {	// soft updates the template already in place
+	var that = this
+	that.adapter.rotation._vec3 = null
 	var update = function(prop) {
 		that.dom[prop].x.innerText = that.adapter[prop].format(that.adapter[prop].x)
 		that.dom[prop].y.innerText = that.adapter[prop].format(that.adapter[prop].y)
 		that.dom[prop].z.innerText = that.adapter[prop].format(that.adapter[prop].z)
 	}
-	update('position')
-	update('rotation')
-	update('scale')
+	if (that.adapter.position.enabled)
+		update('position')
+
+	if (that.adapter.rotation.enabled)
+		update('rotation')
+
+	if (that.adapter.scale.enabled)
+		update('scale')
 
 	if (that.controls.objectName)
 		that.controls.objectName.onSourceChange()
@@ -539,3 +476,34 @@ UIProperties.prototype.update = function() {	// soft updates the template alread
 	return this
 }
 
+
+
+/*****************************************************************************/
+
+
+var UINodeProperties = function(){
+	this.template = E2.views.partials.editor.nodeInspector
+	E2.ui.state.on('changed:selectedObjects', this.onSelectedNodeChanged.bind(this))
+}
+
+UINodeProperties.prototype.onAttach = function() {
+	var that = this
+	var node = this.getSelectedNodeRef()
+	if (node) {
+		var onRenamed = function() {
+			that.controls.objectName.onSourceChange()
+		}
+		node.on('renamed', onRenamed)
+		this.detachQueue.push(function(){node.off('renamed', onRenamed)})
+
+		var update = this.update.bind(this)
+		node.on('pluginStateChanged', update)
+		this.detachQueue.push(function(){node.off('pluginStateChanged', update)})
+	}
+}
+
+UINodeProperties.prototype.onSelectedNodeChanged = function(selected) {
+	if (!(this.selected && (this.selected.length > 0))) return
+	this.render()
+	console.log('selected node changed ', selected)
+}

@@ -576,6 +576,7 @@ header nav ul.dropdown-menu li {
   border: 0;
   margin: 0;
   text-decoration: none;
+  background: none;
 }
 .block-header .nav-tabs > li > span,
 .block-header .nav-tabs > li > a,
@@ -991,7 +992,7 @@ header nav ul.dropdown-menu li {
 .drag-handle {
   cursor: grab;
   position: relative;
-  height: 18px;
+  height: 14px;
   width: 100%;
   background: #262c3d;
   border-bottom: 1px solid #1e2331;

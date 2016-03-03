@@ -51,6 +51,7 @@ VizorUI.prototype.setupEventHandlers = function(e2, dom) {
 
 	dom.chatWindow.find('ul.nav-tabs a').click(makeTabHandler('chat'));
 	dom.presetsLib.find('ul.nav-tabs a').click(makeTabHandler('presets'));
+	dom.propertiesPanel.find('ul.nav-tabs a').click(makeTabHandler('properties'));
 
 	if (dom.assetsLib) dom.assetsLib.find('ul.nav-tabs a').click(makeTabHandler('assets'));
 
@@ -143,6 +144,11 @@ VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 	dom.tabPresets = presetsTabs.find("a[href='#presets']").parent();
 	dom.tabObjects = presetsTabs.find("a[href='#objects']").parent();
 
+
+	var propertiesTabs = jQuery('#properties-panel div.block-header ul.nav-tabs li');
+	dom.tabObjProperties = propertiesTabs.find("a[href='#obj3dPropertiesPane']").parent();
+	dom.tabNodeProperties = propertiesTabs.find("a[href='#nodePropertiesPane']").parent();
+
 	var shaderBlock = $('.shader-block')
 	shaderBlock.movable()
 
@@ -180,7 +186,10 @@ VizorUI.prototype.init = function(e2) {	// normally the global E2 object
 
 	this.setupEventHandlers(e2,this.dom);
 
-	this.propertiesPanel = new UIProperties(jQuery('#propertiesPane', dom.propertiesPanel))
+	this.propertiesPanel = {
+		obj3d : new UIObjectProperties(jQuery('#obj3dPropertiesPane', dom.propertiesPanel)),
+		node :  new UINodeProperties(jQuery('#nodePropertiesPane', dom.propertiesPanel))
+	}
 
 	this.setupStateStoreEventListeners();
 	this.state.allowStoreOnChange = true;
@@ -408,16 +417,16 @@ VizorUI.prototype.onLibSearchClicked = function(e) {
 }
 
 VizorUI.prototype.isPanelChatVisible = function() {
-	var s = this.state, v = s.visibility;
-	return s.visible && v.floating_panels && v.panel_chat;
+	return this.state.visibility.panel_chat
 }
 VizorUI.prototype.isPanelPresetsVisible = function() {
-	var s = this.state, v = s.visibility;
-	return s.visible && v.floating_panels && v.panel_presets;
+	return this.state.visibility.panel_presets
 }
 VizorUI.prototype.isPanelAssetsVisible = function() {
-	var s = this.state, v = s.visibility;
-	return s.visible && v.floating_panels && v.panel_assets;
+	return this.state.visibility.panel_assets
+}
+VizorUI.prototype.isPanelPropertiesVisible = function() {
+	return this.state.visibility.panel_properties
 }
 
 VizorUI.prototype.togglePanelChatCollapsed = function() {
@@ -429,12 +438,11 @@ VizorUI.prototype.togglePanelAssetsCollapsed = function() {
 VizorUI.prototype.togglePanelPresetsCollapsed = function() {
 	this.dom.presetsToggle.trigger('click');
 }
-
 VizorUI.prototype.togglePanelPropertiesCollapsed = function() {
 	this.dom.propertiesToggle.trigger('click');
 }
 
-
+/*
 VizorUI.prototype.onInspectorClicked = function() {
 	console.error('ON INSPECTOR CLICKED')
 	var app = E2.app;
@@ -450,7 +458,7 @@ VizorUI.prototype.onInspectorClicked = function() {
 	this.state.visibility.inspector = true;
 	return true;
 }
-
+*/
 
 VizorUI.prototype.openPresetSaveDialog = function(serializedGraph) {
 

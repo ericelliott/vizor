@@ -145,7 +145,6 @@ ul.assets-list {
             }
     }
     > li.active {
-        background: @selected-bg;
         cursor: grab;
         svg {
             stroke: @editor-text-active;
@@ -251,6 +250,64 @@ ul.assets-list {
     }
 }
 
+
+
+
+
+
+ul.unit-degree li>span:after {
+  content:"°";
+}
+ul.xyz {
+  li:before {
+	float:left;
+	line-height: 1.4em;
+	margin-right: 5px;
+	padding-top: 1px;
+	color:rgba(255,255,255,0.2);
+  }
+  li.xyz-x:before {content: "X";}
+  li.xyz-y:before {content: "Y";}
+  li.xyz-z:before {content: "Z";}
+}
+
+
+.propertiesContent {
+  ul.xyz {
+	display: flex;
+	display: -webkit-flex;
+	padding-left: 0px;
+	li {
+	  -webkit-flex: 1;
+	  flex: 1;
+	  span {
+		background: rgba(255,255,255,0.1);
+		display: block;
+		line-height: 1.4em;
+		padding: 1px;
+		overflow: hidden;
+	  }
+	}
+	>li:first-child {
+	  padding-right: 5px;
+	}
+	>li:nth-child(2) {
+	  padding: 0 5px;
+	}
+	>li:last-child {
+	  padding-left: 5px;
+	}
+
+  }
+
+  .noSelection, .noSelectionOnly {
+	color: rgba(255,255,255,0.3);
+	text-align: center;
+  }
+  .propertiesContent svg, .propertiesContent svg use {stroke: #fff; fill: #fff;}
+}
+
+
 #properties-panel {
     width: 232px;
     .block-header {
@@ -266,6 +323,15 @@ ul.assets-list {
                 padding:0;
             }
         }
+        section.disabled {
+            ul.xyz li span {
+                background: none;
+                pointer-events: none;
+            }
+            button {
+                opacity: 0.3;
+            }
+        }
         h4 {
             .clearfix;
             font-size: 100%;
@@ -276,9 +342,17 @@ ul.assets-list {
             }
         }
     }
-    #propertiesPane.build.noSelection {
-        section {
-            * { display: none; }
+    #propertiesPane.build {
+        section.noSelectionOnly {
+            display: none;
+        }
+        &.noSelection {
+            section {
+                display: none;
+            }
+            section.noSelectionOnly {
+                display: block;
+            }
         }
     }
     #propertiesObjectName {

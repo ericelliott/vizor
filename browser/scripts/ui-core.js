@@ -162,12 +162,27 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 				.toggleClass('ui_off', inBuildMode)
 				.toggleClass('ui_on', inProgramMode)
 
+			dom.tabObjProperties
+				.toggleClass('ui_off', inProgramMode)
+				.toggleClass('ui_on', inBuildMode)
+
+			dom.tabNodeProperties
+				.toggleClass('ui_off', inBuildMode)
+				.toggleClass('ui_on', inProgramMode)
+
+
 			dom.btnMove.attr('disabled',!inBuildMode);
 			dom.btnScale.attr('disabled',!inBuildMode);
 			dom.btnRotate.attr('disabled',!inBuildMode);
 
-			if (inBuildMode) dom.tabObjects.find('a').trigger('click')
-			else if (inProgramMode) dom.tabPresets.find('a').trigger('click')
+			if (inBuildMode) {
+				dom.tabObjects.find('a').trigger('click')
+				dom.tabObjProperties.find('a').trigger('click')
+			}
+			else if (inProgramMode) {
+				dom.tabPresets.find('a').trigger('click')
+				dom.tabNodeProperties.find('a').trigger('click')
+			}
 
 		})
 		.emit('changed:mode', state.mode);
@@ -341,6 +356,7 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 			that.state.panelStates.chat = VizorUI.getDomPanelState(dom.chatWindow);
 			that.state.panelStates.assets = VizorUI.getDomPanelState(dom.assetsLib);
 			that.state.panelStates.presets = VizorUI.getDomPanelState(dom.presetsLib);
+			that.state.panelStates.properties = VizorUI.getDomPanelState(dom.propertiesPanel);
 		})
 		.emit('changed:context', state.context)
 };
@@ -452,16 +468,12 @@ VizorUI.prototype.onKeyPress = function(e) {
 			E2.app.toggleFullscreen();
 			e.preventDefault();
 			break;
-		/*
+
 		case uiKeys.openInspector:
-			if (this.state.isInProgramMode()) {
-				this.onInspectorClicked();
-			} else {
-				this.togglePropertiesPanel();
-			}
+			this.state.visibility.panel_properties = !this.state.visibility.panel_properties
 			e.preventDefault();
 			break;
-		*/
+
 		case uiKeys.toggleEditorCamera:
 			state.viewCamera = (state.viewCamera === uiViewCam.vr) ? uiViewCam.birdsEye : uiViewCam.vr;
 			e.preventDefault();

@@ -1,8 +1,8 @@
 // allows a button to toggle an object var directly
 var UIToggleButton = function() {
 	this._toggle = function(e) {
-		this.adapter.targetValue = !this.adapter.targetValue
-		this._onTargetChange(e)
+		this.adapter.uiValue = !this.adapter.uiValue
+		this._onUIChange(e)
 	}.bind(this)
 	UIAbstractProxy.apply(this, arguments)
 }
@@ -18,10 +18,10 @@ UIToggleButton.prototype.getAdapter = function(obj, propertyName){
 		set sourceValue(v) {
 			return obj[propertyName] = !!v
 		},
-		get targetValue() {
+		get uiValue() {
 			return that.element.dataset.state === 'on'
 		},
-		set targetValue(v) {
+		set uiValue(v) {
 			that.element.dataset.state = (v) ? 'on' : 'off'
 			that.element.classList.toggle('uiToggle_on', !!v)
 			that.element.classList.toggle('uiToggle_off', !v)

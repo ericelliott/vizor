@@ -13,10 +13,10 @@ UICheckbox.prototype.getAdapter = function(obj, propertyName){
 		set sourceValue(v) {
 			return obj[propertyName] = !!v
 		},
-		get targetValue() {
+		get uiValue() {
 			return that.element.checked
 		},
-		set targetValue(v) {
+		set uiValue(v) {
 			return that.element.checked = !!v
 		}
 	}
