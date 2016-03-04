@@ -110,6 +110,7 @@ var VizorUI = function() {			// becomes E2.ui
 	};
 };
 VizorUI.prototype = Object.create(EventEmitter.prototype);
+VizorUI.prototype.constructor = VizorUI
 
 VizorUI.prototype._init = function(e2) {	// called by .init() in ui.js
 	this.dom = e2.dom;
@@ -118,7 +119,7 @@ VizorUI.prototype._init = function(e2) {	// called by .init() in ui.js
 	document.addEventListener('keypress', this.onKeyPress.bind(this), true);	// first
 	window.addEventListener('blur', this._clearModifierKeys.bind(this));
 	window.addEventListener('focus', this._clearModifierKeys.bind(this));
-	e2.core.on('resize', this.onWindowResize.bind(this));
+	window.addEventListener('resize', this.onWindowResize.bind(this));
 	e2.core.on('fullScreenChanged', this.onFullScreenChanged.bind(this));
 	e2.core.on('progress', this.updateProgressBar.bind(this));
 }
@@ -755,7 +756,15 @@ VizorUI.prototype.onFullScreenChanged = function() {	// placeholder
 	return true;
 };
 
+VizorUI.prototype.constrainAllPanels = function() {
+	VizorUI.constrainPanel(this.dom.chatWindow)
+	VizorUI.constrainPanel(this.dom.presetsLib)
+	VizorUI.constrainPanel(this.dom.assetsLib)
+	VizorUI.constrainPanel(this.dom.propertiesPanel)
+}
+
 VizorUI.prototype.onWindowResize = function() {
+	this.constrainAllPanels()
 	this.state.context = VizorUI.getContext();
 	return true;
 };
