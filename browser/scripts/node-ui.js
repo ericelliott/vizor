@@ -175,7 +175,6 @@ function NodeUI(parent_node, x, y, z) {
 		E2.app.updateCanvas(true)
 	})
 
-	this.parent_node.addListener('renamed', this.onRenamed.bind(this));
 
 	make_draggable($dom,
 		E2.app.onNodeDragged.bind(E2.app, parent_node),
@@ -191,6 +190,7 @@ function NodeUI(parent_node, x, y, z) {
 		this.setCssClass();
 		this.redrawSlots();
 	}.bind(this));
+	this.parent_node.on('renamed', this.onRenamed.bind(this));
 
 	VizorUI.disableContextMenu($dom[0]);
 }
@@ -279,9 +279,10 @@ NodeUI.prototype.destroy = function() {
 	return this;
 }
 
-NodeUI.prototype.onRenamed = function() {
+NodeUI.prototype.onRenamed = function(name) {
+	$('span.p_title', this.header).text(name)
+	NodeUI.redrawActiveGraph();
 	this.setCssClass()
-	return true
 }
 
 NodeUI.prototype.openInspector = function() {
@@ -308,32 +309,26 @@ NodeUI.prototype.setCssClass = function() {
 	var flags = this.getPluginUIFlags(true);
 
 	if (this.canDisplayInline()) {
-		$dom.removeClass('p_expand').removeClass('p_collapse').addClass('p_inline');
+		$dom
+			.removeClass('p_expand')
+			.removeClass('p_collapse')
+			.addClass('p_inline')
 	} else {
-		$dom.removeClass('p_inline');
-		if (this.parent_node.open) {
-			$dom.addClass('p_expand').removeClass('p_collapse');
-		} else {
-			$dom.addClass('p_collapse').removeClass('p_expand');
-		}
+		$dom
+			.removeClass('p_inline')
+			.toggleClass('p_expand', this.parent_node.open)
+			.toggleClass('p_collapse', !this.parent_node.open)
 	}
 
-	var classIf = function(condition, className, $j) {
-		if (typeof $j === 'undefined') $j = $dom;
-		if (condition)
-			$j.addClass(className);
-		else
-			$j.removeClass(className);
-		return $j
-	};
-	classIf(flags.has_inputs, 'p_has_ins');
-	classIf(flags.has_outputs, 'p_has_outs');
-	classIf(flags.single_in, 'p_1in');
-	classIf(flags.single_out, 'p_1out');
-	classIf(this.canDisplayOutputInHeader(), 'p_header_out');
-	classIf(this.canDisplayInputInHeader(), 'p_header_in');
-	classIf(this.isSelected(), 'p_selected');
-	classIf(this.isRenamed(), 'p_renamed');
+	$dom
+		.toggleClass('p_has_ins', flags.has_inputs)
+		.toggleClass('p_has_outs', flags.has_outputs)
+		.toggleClass('p_1in', flags.single_in)
+		.toggleClass('p_1out', flags.single_out)
+		.toggleClass('p_header_out', this.canDisplayOutputInHeader())
+		.toggleClass('p_header_in', this.canDisplayInputInHeader())
+		.toggleClass('p_selected', this.isSelected())
+		.toggleClass('p_renamed', this.isRenamed())
 
 	var currentWidth = $dom[0].style.width;
 	if (!currentWidth) currentWidth = 'auto';
@@ -572,7 +567,7 @@ NodeUI.prototype.showRenameControl = function() {
 			width:  '' + $titleSpan.innerWidth() - 10 + 'px',
 			left: '' + (10 + titleOffset.left - domOffset.left) + 'px'
 		})
-		.val(node.title || node.id)
+		.val(node.get_disp_name())
 		.keydown(function(e){
 			var code = e.keyCode || e.which
 			if(code === 13) {
@@ -589,8 +584,6 @@ NodeUI.prototype.showRenameControl = function() {
 
 				if (name) {
 					E2.app.graphApi.renameNode(E2.core.active_graph, node, name);
-					that.setCssClass();
-					NodeUI.redrawActiveGraph();
 				}
 
 			}

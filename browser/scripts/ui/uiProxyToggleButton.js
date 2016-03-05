@@ -1,16 +1,13 @@
 // allows a button to toggle an object var directly
 var UIToggleButton = function() {
-	this._toggle = function(e) {
-		this.adapter.uiValue = !this.adapter.uiValue
-		this._onUIChange(e)
-	}.bind(this)
 	UIAbstractProxy.apply(this, arguments)
 }
 UIToggleButton.prototype = Object.create(UIAbstractProxy.prototype)
 UIToggleButton.prototype.constructor = UIToggleButton
 
-UIToggleButton.prototype.getAdapter = function(obj, propertyName){
+UIToggleButton.prototype.getAdapter = function(){
 	var that = this
+	var obj = this.obj, propertyName = this.propertyName
 	return {
 		get sourceValue() {
 			return !!obj[propertyName]
@@ -42,10 +39,15 @@ UIToggleButton.prototype.checkValidElement = function(domElement) {
 	return (domElement.tagName === 'BUTTON')  &&  (typ.toLowerCase() !== 'submit')
 }
 
-UIToggleButton.prototype._attach = function() {
+UIToggleButton.prototype.attach = function() {
+	this._toggle = function(e) {
+		this.adapter.uiValue = !this.adapter.uiValue
+		this._onUIChange(e)
+	}.bind(this)
 	this.element.addEventListener('click', this._toggle)
 }
 
-UIToggleButton.prototype._detach = function() {
-	this.element.removeEventListener('click', this._toggle)
+UIToggleButton.prototype.detach = function() {
+	if (this._toggle)
+		this.element.removeEventListener('click', this._toggle)
 }

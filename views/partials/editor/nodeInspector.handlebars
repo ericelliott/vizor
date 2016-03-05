@@ -1,8 +1,36 @@
 <div class="propertiesContent nodeInspector">
     <section class="collapsible" id="propertiesSectionNode">
-        <h4></h4>
-        <p class="noSelection">
-            select a graph node to see its properties
-        </p>
+        {{#if properties.nodeProps.enabled}}
+            {{#each controls.nodeProps}}
+                <div class="prop pt{{this.dt}}">
+                    <label>{{this.label}}</label>
+                    {{{this.control}}}
+                </div>
+            {{/each}}
+        {{/if}}
+
+        {{#if properties.slotProps.enabled}}
+            {{#each controls.slotProps}}
+                <div class="prop pt{{this.dt}}">
+                    <label>{{this.label}}</label>
+                    {{{this.control}}}
+                </div>
+            {{/each}}
+        {{/if}}
+
+
+        {{#if properties.common.enabled}}
+            <h4>Common</h4>
+            {{#with controls.common}}
+                <label>Name: </label>
+                {{{nodeName}}}
+            {{/with}}
+        {{else}}
+            <h4></h4>
+
+            <p class="noSelection">
+                select a graph node to see its properties
+            </p>
+        {{/if}}
     </section>
 </div>

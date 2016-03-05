@@ -12,6 +12,25 @@ E2.p = E2.plugins["xor_modulator"] = function(core, node)
 	];
 };
 
+E2.p.prototype.getInspectorSlots = function() {
+	var s = this.input_slots[0]
+	var n = this.parentNode
+	var that = this
+	return {
+		'a' : {
+			dt : s.dt,
+			label : 'Input A',
+			get value() {
+				if (s.is_connected) return that.conds[0]
+				return n.getInputSlotValue('a') },
+			set value(v) {
+				E2.app.graphApi.changeInputSlotValue(n.parent_graph, n, 'a', v)
+				return n.getInputSlotValue('a')
+			}
+		}
+	}
+}
+
 E2.p.prototype.reset = function()
 {
 	this.conds = [ false, false ];

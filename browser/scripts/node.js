@@ -272,6 +272,7 @@ Node.prototype.setInputSlotValue = function(name, value) {
 	this.plugin.inputValues[name] = value
 
 	this.plugin.update_input(slot, value)
+	this.emit('pluginInputSlotValueChanged', slot, value)
 }
 
 Node.prototype.getInputSlotValue = function(name) {

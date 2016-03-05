@@ -1,4 +1,4 @@
-var UICheckbox = function() {
+var UICheckbox = function(obj, propertyName, domElement, onChange) {
 	UIAbstractProxy.apply(this, arguments)
 }
 UICheckbox.prototype = Object.create(UIAbstractProxy.prototype)

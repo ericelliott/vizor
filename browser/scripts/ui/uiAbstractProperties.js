@@ -4,21 +4,27 @@
  * the UI dom elements are slaved to them.
  * this panel listens to appropriate changes and brings them to the UI
  * the panel's controls set properties on its adapter on domElement onChange/onInput events.
- * @param domElement container to render in
  * @constructor
  */
 var UIAbstractProperties = function(domElement) {
 	EventEmitter.apply(this, arguments)
 	var that = this
 
+	this.attached = false
+	this.updateQueued = false
 	this.detachQueue = []
+
 	this._nodes = null	// holds selection
 
 	// holds references to DOM elements tied to this.adapter properties
-	this.dom = {}
-	// holds references to UI controls tied to this.adapter properties
+	this.dom = {
+		container: null		// typically $(domElement)
+	}
+	// holds references to any custom UI control objects, controlling this.adapter via this.dom events
 	this.controls = {}
-	this.adapter = this.getAdapter()
+
+	// will be set at render-time, to allow nodes to expose properties
+	this.adapter = null
 
 	Object.defineProperty(this, 'selected', {
 		get: function() {
@@ -45,7 +51,6 @@ var UIAbstractProperties = function(domElement) {
 
 	E2.ui.on('undo', this.onUndo.bind(this))
 	E2.ui.on('redo', this.onRedo.bind(this))
-	// E2.ui.state.on('changed:mode', this.onModeChanged.bind(this))
 }
 UIAbstractProperties.prototype = Object.create(EventEmitter.prototype)
 UIAbstractProperties.prototype.constructor = UIAbstractProperties
@@ -83,15 +88,30 @@ UIAbstractProperties.prototype.onSelectedObjectChangedState = function() {
 	this.update()
 }
 
-
+/**
+ * sometimes we need to wait the graph to complete a cycle so we request a call on next frame
+ */
+UIAbstractProperties.prototype.queueUpdate = function() {
+	if (this.updateQueued) return
+	this.updateQueued = true
+	var that = this
+	requestAnimFrame(function(){
+		that.updateQueued = false
+		if (that.attached) that.update()
+	})
+}
 
 UIAbstractProperties.prototype.render = function() {	// hard-resets panel clearing container and rerendering template
 	this._detach()
-
-	var props = this.getTemplateData()
+	this.adapter = this.getAdapter()
+	this.controls = this.getControls()
+	var props = this.getTemplateData()	// formatted etc
 
 	this.dom.container.empty()
-	this.dom.container.html(this.template({properties: props}))
+	this.dom.container.html(this.template({
+		properties: props,
+		controls: this.controls
+	}))
 
 	VizorUI.replaceSVGButtons(this.dom.container)
 
@@ -101,7 +121,6 @@ UIAbstractProperties.prototype.render = function() {	// hard-resets panel cleari
 }
 
 UIAbstractProperties.prototype._detach = function() {
-	this.onDetach()
 
 	$('*', this.dom).off('.uiProperties')
 
@@ -112,12 +131,17 @@ UIAbstractProperties.prototype._detach = function() {
 		}
 	}
 
+	this.onDetach()
+
 	this.emit('detached')
+	this.attached = false
+
 }
 
 UIAbstractProperties.prototype._attach = function() {
 	this.onAttach()
 	this.emit('attached')
+	this.attached = true
 }
 
 UIAbstractProperties.prototype._reset = function() {	// resets handling, clears interface
@@ -128,15 +152,19 @@ UIAbstractProperties.prototype._reset = function() {	// resets handling, clears 
 	return this
 }
 
+/********* methods to implement ***********/
+
+/* strongly recommend implementing */
+				UIAbstractProperties.prototype.getTemplateData = function() {return this.adapter}
 /**
  * the adapter bridges values for the selected object's state and the properties' UI controls
  * get() returns the authoritative source e.g. the object's properties
  * set() updates both the object and the UI display
  */
 /* @abstract */ UIAbstractProperties.prototype.getAdapter = function() {return {}}
-/* @abstract */ UIAbstractProperties.prototype.getTemplateData = function() {return {}}
-/* @abstract */ UIAbstractProperties.prototype.onDetach 	= function() {}
+/* @abstract */ UIAbstractProperties.prototype.getControls = function() {return {}}
 /* @abstract */ UIAbstractProperties.prototype.onAttach 	= function() {}
+/* @abstract */ UIAbstractProperties.prototype.onDetach 	= function() {}	// this.detachQueue is automatically processed
 /* @abstract */ UIAbstractProperties.prototype.onReset 	= function() {}
 /* @abstract */ UIAbstractProperties.prototype.update 	= function() {}	// soft-update this.dom{} in place
 

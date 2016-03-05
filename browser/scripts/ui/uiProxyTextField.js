@@ -8,7 +8,8 @@ UITextField.prototype.getAdapter = function(obj, propertyName){
 	var that = this
 	return {
 		get sourceValue() {
-			return obj[propertyName].toString()
+			var sv = obj[propertyName]
+			return (sv || (sv === 0)) ? sv.toString() : ''
 		},
 		set sourceValue(v) {
 			return obj[propertyName] = v.toString()

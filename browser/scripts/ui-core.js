@@ -286,7 +286,6 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 		VizorUI.constrainPanel(panel);
 	});
 
-
 	state.on('changed:panelStates:presets', function(panelState){
 		if (!panelState) return;
 		if (!panelState._found) return;
@@ -347,6 +346,7 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 	});
 
 	state
+		.emit('changed:panelStates:properties', state.panelStates.properties)
 		.emit('changed:panelStates:presets', state.panelStates.presets)
 		.emit('changed:panelStates:assets', state.panelStates.assets)
 		.emit('changed:panelStates:chat', state.panelStates.chat)

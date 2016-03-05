@@ -1,7 +1,5 @@
 // -> create -> (reset: -> detach) -> select -> init -> render -> attach -> done
 
-var rad2deg = 180 / 3.14159265358
-
 var UIObjectProperties = function(domElement) {
 	UIAbstractProperties.apply(this, arguments)
 
@@ -40,8 +38,8 @@ UIObjectProperties.prototype = Object.create(UIAbstractProperties.prototype)
 UIObjectProperties.prototype.constructor = UIObjectProperties
 
 UIObjectProperties.prototype.getAdapter = function() {
-
 	var that = this
+	var rad2deg = 180 / 3.14159265358
 
 	var objectFormatter = function() {	// chew data for handlebars
 		return {
@@ -214,11 +212,8 @@ UIObjectProperties.prototype.getAdapter = function() {
 
 	return adapter
 }
-UIObjectProperties.prototype.onReset = function() {
-	this.adapter.rotation._vec3 = null
-}
+
 UIObjectProperties.prototype.render = function() {
-	this.adapter.rotation._vec3 = null	// force refresh
 	return UIAbstractProperties.prototype.render.call(this, arguments)
 }
 
@@ -476,34 +471,3 @@ UIObjectProperties.prototype.update = function() {	// soft updates the template 
 	return this
 }
 
-
-
-/*****************************************************************************/
-
-
-var UINodeProperties = function(){
-	this.template = E2.views.partials.editor.nodeInspector
-	E2.ui.state.on('changed:selectedObjects', this.onSelectedNodeChanged.bind(this))
-}
-
-UINodeProperties.prototype.onAttach = function() {
-	var that = this
-	var node = this.getSelectedNodeRef()
-	if (node) {
-		var onRenamed = function() {
-			that.controls.objectName.onSourceChange()
-		}
-		node.on('renamed', onRenamed)
-		this.detachQueue.push(function(){node.off('renamed', onRenamed)})
-
-		var update = this.update.bind(this)
-		node.on('pluginStateChanged', update)
-		this.detachQueue.push(function(){node.off('pluginStateChanged', update)})
-	}
-}
-
-UINodeProperties.prototype.onSelectedNodeChanged = function(selected) {
-	if (!(this.selected && (this.selected.length > 0))) return
-	this.render()
-	console.log('selected node changed ', selected)
-}

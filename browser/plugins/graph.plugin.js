@@ -22,10 +22,14 @@ GraphPlugin.prototype = Object.create(SubGraphPlugin.prototype)
 GraphPlugin.prototype.constructor = GraphPlugin
 
 GraphPlugin.prototype.getInspectorProperties = function() {
-	var s = this.state
+	var that = this, s = this.state
 	return {
-		get always_update() { return s.always_update },
-		set always_update(v) { s.always_update = v; return s.always_update; }
+		always_update : {
+			dt : E2.dt.BOOL,
+			label : 'Always update',
+			get value() { return s.always_update },
+			set value(v) {return s.always_update = v }
+		}
 	}
 }
 
