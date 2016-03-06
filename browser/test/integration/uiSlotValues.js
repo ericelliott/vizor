@@ -86,6 +86,11 @@ describe('Changing Slot Values', function() {
 		graph.update()
 	})
 
+	// @todo it('updates slot value on disconnecting slot')
+	// @todo it('returns slot value to default on disconnecting slot')
+	// @todo it('always returns default slot value regardless of connection')
+
+
 })
 
 
