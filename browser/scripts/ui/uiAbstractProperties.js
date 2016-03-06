@@ -103,9 +103,16 @@ UIAbstractProperties.prototype.queueUpdate = function() {
 
 UIAbstractProperties.prototype.render = function() {	// hard-resets panel clearing container and rerendering template
 	this._detach()
-	this.adapter = this.getAdapter()
-	this.controls = this.getControls()
-	var props = this.getTemplateData()	// formatted etc
+	var canRender = this.selected && this.selected.length === 1
+	if (canRender) {
+		this.adapter = this.getAdapter()
+		this.controls = this.getControls()
+		var props = this.getTemplateData()	// formatted etc
+	} else {
+		var props = {}
+		this.adapter = {}
+		this.controls = {}
+	}
 
 	this.dom.container.empty()
 	this.dom.container.html(this.template({
@@ -127,7 +134,7 @@ UIAbstractProperties.prototype._detach = function() {
 	if (this.detachQueue && this.detachQueue.length) {
 		var removeHandler
 		while (removeHandler = this.detachQueue.pop()) {
-			if (typeof removeHandler === 'function') removeHandler()
+			removeHandler()
 		}
 	}
 
@@ -148,6 +155,8 @@ UIAbstractProperties.prototype._reset = function() {	// resets handling, clears 
 	this._nodes = []
 	this.onReset()
 	this._detach()
+	this.adapter = {}
+	this.controls = {}
 	this.emit('reset')
 	return this
 }

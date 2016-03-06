@@ -28,6 +28,7 @@ var UIObjectProperties = function(domElement) {
 	}
 
 	E2.ui.on('worldeditor:selectionset', this.onObjectPicked.bind(this))
+	E2.ui.on('changed:selectedObjects', this.onObjectPicked.bind(this))
 	E2.app.worldEditor.cameraSelector.transformControls.addEventListener('objectChange', this.onSelectedObjectChangedState.bind(this))
 
 	this.emit('created')

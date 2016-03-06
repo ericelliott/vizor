@@ -1,7 +1,7 @@
 <div class="propertiesContent nodeInspector">
     <section class="collapsible" id="propertiesSectionNode">
-        {{#if properties.nodeProps.enabled}}
-            {{#each controls.nodeProps}}
+        {{#if controls.stateProps._enabled}}
+            {{#each controls.stateProps}}
                 <div class="prop pt{{this.dt}}">
                     <label>{{this.label}}</label>
                     {{{this.control}}}
@@ -9,7 +9,7 @@
             {{/each}}
         {{/if}}
 
-        {{#if properties.slotProps.enabled}}
+        {{#if controls.slotProps._enabled}}
             {{#each controls.slotProps}}
                 <div class="prop pt{{this.dt}}">
                     <label>{{this.label}}</label>
@@ -19,7 +19,7 @@
         {{/if}}
 
 
-        {{#if properties.common.enabled}}
+        {{#if controls.common._enabled}}
             <h4>Common</h4>
             {{#with controls.common}}
                 <label>Name: </label>
@@ -29,7 +29,7 @@
             <h4></h4>
 
             <p class="noSelection">
-                select a graph node to see its properties
+                select one graph node to see its properties
             </p>
         {{/if}}
     </section>

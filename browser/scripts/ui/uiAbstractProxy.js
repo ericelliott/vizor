@@ -7,6 +7,7 @@ var UIAbstractProxy = function(obj, propertyName, domElement, onChange) {
 	this.propertyName = propertyName
 	this._onChange = onChange
 	this.element = null
+	this._enabled = true
 
 	if (domElement) {
 		this.element = this.render(domElement)
@@ -17,8 +18,8 @@ var UIAbstractProxy = function(obj, propertyName, domElement, onChange) {
 }
 
 UIAbstractProxy.prototype.render = function(domElement) {
-	this.createdElement = false
 	if (domElement) {
+		this.createdElement = false
 		if (domElement.id) {
 			this.htmlId = domElement.id
 		} else {
@@ -38,7 +39,8 @@ UIAbstractProxy.prototype.render = function(domElement) {
 	}
 }
 
-// render this in handlebars, attaching automatically upon render
+// in case this is rendered some place else (e.g. handlebars),
+// return html, adding a little script to attach event handlers automatically upon render
 UIAbstractProxy.prototype.toString = function() {
 	var that = this
 
@@ -61,23 +63,14 @@ UIAbstractProxy.prototype.toString = function() {
 	}
 	document.addEventListener('uiproxy_rendered', d.listener)
 
+	// as soon as this element is rendered, we announce ourselves to the document
 	str += "<script id='_js_"+ this.uid +"'>document.dispatchEvent(new CustomEvent('uiproxy_rendered', {detail:{htmlId:'" + this.htmlId + "'}}))</script>"
 	return str
 }
 
 UIAbstractProxy.prototype._getAdapter = function() {
-	var a = this.getAdapter(this.obj, this.propertyName)
-	// shorthand for setting both values at the same time
-	Object.defineProperty(a, 'value', {
-		set: function (v) {
-			this.sourceValue = v
-			return this.uiValue = this.sourceValue
-		},
-		get: function() {
-			return this.sourceValue
-		}
-	})
-	return a
+	var adapter = this.getAdapter(this.obj, this.propertyName)
+	return adapter
 }
 
 UIAbstractProxy.prototype._update = function() {
@@ -87,11 +80,9 @@ UIAbstractProxy.prototype._update = function() {
 UIAbstractProxy.prototype._attach = function() {
 	var el = document.getElementById(this.htmlId)
 	if (el !== this.element) {
-		console.log('element has changed', el, this.htmlId)
 		this.element = el
 	}
 	this.adapter = this._getAdapter()
-	console.log('got adapter', this.adapter)
 	this._onUIChange = function(e){
 		var oldSourceValue = this.adapter.sourceValue
 		if (this.adapter.uiValue !== oldSourceValue) {	// blur triggers onchange. avoid it.
@@ -99,9 +90,11 @@ UIAbstractProxy.prototype._attach = function() {
 			if (this._onChange) this._onChange.call(this, e, this.adapter.sourceValue, oldSourceValue)
 		}
 	}.bind(this)
+	this.onSourceChange()
+	this.onEnabledChange(this._enabled)
 	this.attach()
-	this.adapter.uiValue = this.adapter.sourceValue
 
+	// release extra references
 	this.obj = null
 	this.propertyName = null
 }
@@ -126,7 +119,6 @@ UIAbstractProxy.prototype.getAdapter = function(obj, propertyName){console.error
 UIAbstractProxy.prototype.checkValidElement = function() {return true}
 /* end overloaded methods */
 UIAbstractProxy.prototype.onUIChange = function() {
-	console.log('uichange', this.adapter.sourceValue, this.adapter.uiValue)
 	this.adapter.sourceValue = this.adapter.uiValue
 	if (this.element && this.element.blur)
 		this.element.blur()
@@ -136,13 +128,28 @@ UIAbstractProxy.prototype.onSourceChange = function() {
 	this._update()
 	return true
 }
+UIAbstractProxy.prototype.onEnabledChange = function(enabled) {
+	if (this.element)
+		this.element.disabled = !enabled
+}
+
+UIAbstractProxy.prototype.enable = function() {
+	this._enabled = true
+	this.onEnabledChange(this._enabled)
+}
+
+UIAbstractProxy.prototype.disable = function() {
+	this._enabled = false
+	this.onEnabledChange(this._enabled)
+}
 
 UIAbstractProxy.prototype.destroy = function() {
-	console.log('destroying')
+	console.log('destroying ' + this.uid)
 	this._detach()
 	if (this.createdElement) {
 		var p = this.element.parentElement
 		if (p) p.removeChild(this.element)
 		this.element = null
 	}
+	this.adapter = null
 }
