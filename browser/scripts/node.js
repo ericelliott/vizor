@@ -1,6 +1,6 @@
 /**
  * a Node in a patching graph
- * @emits openStateChanged, pluginStateChanged, slotAdded, slotRemoved
+ * @emits openStateChanged, pluginStateChanged, slotAdded, slotRemoved, pluginInputSlotValueChanged
  * @constructor
  */
 function Node(parent_graph, plugin_id, x, y) {
@@ -143,7 +143,7 @@ Node.prototype.reset = function() {
 	if (p.reset)
 		p.reset()
 
-	for(slotName in this.uiSlotValues) {
+	for(var slotName in this.uiSlotValues) {
 		if (!this.uiSlotValues.hasOwnProperty(slotName))
 			continue
 
@@ -275,11 +275,26 @@ Node.prototype.setInputSlotValue = function(name, value) {
 	this.emit('pluginInputSlotValueChanged', slot, value)
 }
 
+Node.prototype.getDefaultSlotValue = function(slot) {
+	var name = slot.name
+
+	// try by definition
+	if (this.uiSlotValues &&  this.uiSlotValues[name] !== undefined)
+		return this.uiSlotValues[name]
+
+	// get it by the slot
+	if (slot.def !== undefined)
+		return slot.def
+
+	// ask the core
+	return E2.app.player.core.get_default_value(slot.dt)
+}
+
 Node.prototype.getInputSlotValue = function(name) {
+	if (this.plugin.inputValues &&  this.plugin.inputValues[name] !== undefined)
+		return this.plugin.inputValues[name]
 	var slot = this.findInputSlotByName(name)
-	return this.plugin.inputValues[name] !== undefined ?
-		this.plugin.inputValues[name] :
-		slot.def
+	return this.getDefaultSlotValue(slot)
 }
 
 Node.prototype.findInputSlotByName = function(name) {
@@ -770,6 +785,63 @@ Node.prototype.initialise = function() {
 
 	if (this.plugin.isGraph)
 		this.plugin.graph.initialise()
+}
+
+Node.prototype.getInspectorStateProps = function() {
+	// get any state properties my plugin advertises and from each such prop make a proxy
+	if (typeof this.plugin.getInspectorProperties === 'undefined') return {}
+	var that = this, plugin = this.plugin, state = plugin.state
+	var props = plugin.getInspectorProperties()
+	var ret = {}
+	Object.keys(props).forEach(function(name){
+		var prop = props[name]
+		ret[name] = {
+			dt 		: prop.dt,
+			label 	: prop.label,
+			get canEdit() {
+				return typeof plugin.undoableSetState === 'function'
+			},
+			get _value() {
+				return state[name]
+			},
+			// only use this setter for debugging
+			// node.plugin.undoableSetState() otherwise
+			set _value(v) {
+				return that.setPluginState(name, v)
+			}
+		}
+	})
+	return ret
+}
+
+Node.prototype.getInspectorSlotProps = function() {
+	// get any slots my plugin advertises and for each such slot make a proxy
+	if (typeof this.plugin.getInspectorSlotNames === 'undefined') return {}
+	var that = this
+	var slots = this.plugin.getInspectorSlotNames()
+	var ret = {}
+	slots.forEach(function(name){	// non-dynamic, input slots only
+		var slot = that.findInputSlotByName(name)
+		ret[name] = {
+			dt 		: slot.dt,
+			label 	: slot.shortName || slot.name,
+			get canEdit() {
+				return !slot.is_connected
+			},
+			get default() {
+				return that.getDefaultSlotValue(slot)
+			},
+			get _value() {
+				return that.getInputSlotValue(name)
+			},
+			// only use this setter for debugging
+			// E2.app.graphApi.changeInputSlotValue() otherwise
+			set _value(v) {
+				return that.setInputSlotValue(name, v)
+			}
+		}
+	})
+	return ret
 }
 
 Node.hydrate = function(guid, json) {
