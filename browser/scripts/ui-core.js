@@ -785,7 +785,7 @@ VizorUI.getControlTypeForDT = function(dt) {
 	var types = E2.core.datatypes
 	switch (dt) {
 		case types.BOOL:
-			return UICheckbox
+			return UIToggleButton
 		case types.FLOAT:
 			return UIFloatField
 		case types.TEXT:

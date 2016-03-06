@@ -373,4 +373,21 @@ ul.xyz {
         }
         &+button {margin-right: 2px}
     }
+
+    div.nodeInspector {
+        div.prop.ptBoolean {
+            button {
+                width: 1.4em;
+                height: 1.4em;
+                line-height: 1.4em;
+                border-radius: 50%;
+                &[disabled] {
+                    border: 2px dotted #AFBFDF;
+                    &.uiToggle_on {
+                        border: 2px dotted #000;
+                    }
+                }
+            }
+        }
+    }
 }
