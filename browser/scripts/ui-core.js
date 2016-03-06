@@ -144,8 +144,9 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 	E2.app.graphStore.on('nodeRemoved', function(graph, node){
 		var ix = state.selectedObjects.indexOf(node)
 		if (ix !== -1) {
-			state.selectedObjects.splice(ix, 1)
-			state.selectedObjects = _.clone(state.selectedObjects)	// refresh
+			var sel = _.clone(state.selectedObjects)
+			sel.splice(ix, 1)
+			state.selectedObjects = sel	// refresh
 		}
 	})
 
