@@ -141,6 +141,13 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 		var sizeInKb = (size / 1048576).toFixed(2) // megabytes
 		$('#graphSizeLabel').html(sizeInKb + ' MB')
 	})
+	E2.app.graphStore.on('nodeRemoved', function(graph, node){
+		var ix = state.selectedObjects.indexOf(node)
+		if (ix !== -1) {
+			state.selectedObjects.splice(ix, 1)
+			state.selectedObjects = _.clone(state.selectedObjects)	// refresh
+		}
+	})
 
 	state
 		.on('changed:mode', function(mode) {
@@ -772,6 +779,19 @@ VizorUI.prototype.onWindowResize = function() {
 
 
 /***** HELPER METHODS *****/
+
+VizorUI.getControlTypeForDT = function(dt) {
+	var types = E2.core.datatypes
+	switch (dt) {
+		case types.BOOL:
+			return UICheckbox
+		case types.FLOAT:
+			return UIFloatField
+		case types.TEXT:
+			return UITextField
+	}
+	return false
+}
 
 VizorUI.getContext = function() {
 	return {
