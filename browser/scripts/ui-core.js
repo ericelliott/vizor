@@ -248,18 +248,19 @@ VizorUI.prototype.setupStateStoreEventListeners = function() {
 				that.dom.tabPresets.find('a').trigger('click')
 			}
 			dom.btnSavePatch.attr('disabled', !visible);
-			//dom.btnInspector.attr('disabled', !visible);
 		})
 		.emit('changed:visibility:patch_editor', visibility.patch_editor);
 
 	state
 		.on('changed:selectedObjects', function(selected){
-			var what = '';
+			var text = '';
 			if (selected) {
-				if (selected.length > 1) what = selected.length + ' objects';
-				else if (selected.length === 1) what = selected[0].title || selected[0].id;
+				if (selected.length > 1)
+					text = selected.length + ' objects';
+				else if (selected.length === 1)
+					text = selected[0].title || selected[0].id;
 			}
-			that.buildBreadcrumb(E2.core.active_graph, function(b){if (what) b.add(what)});
+			that.buildBreadcrumb(E2.core.active_graph, function(b){if (text) b.add(text)});
 		})
 		.emit('changed:selectedObjects', state.selectedObjects);
 
@@ -479,7 +480,7 @@ VizorUI.prototype.onKeyPress = function(e) {
 			break;
 
 		case uiKeys.openInspector:
-			this.state.visibility.panel_properties = !this.state.visibility.panel_properties
+			state.visibility.panel_properties = !state.visibility.panel_properties
 			e.preventDefault();
 			break;
 

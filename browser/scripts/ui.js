@@ -442,24 +442,6 @@ VizorUI.prototype.togglePanelPropertiesCollapsed = function() {
 	this.dom.propertiesToggle.trigger('click');
 }
 
-/*
-VizorUI.prototype.onInspectorClicked = function() {
-	console.error('ON INSPECTOR CLICKED')
-	var app = E2.app;
-	if (app.selectedNodes.length===1) {
-		if (app.selectedNodes[0].ui.hasPreferences()) {
-			app.selectedNodes[0].ui.openInspector();
-		} else {
-			app.growl('This node has no settings.','info',4000);
-		}
-	} else {
-		app.growl('Select one particular patch to see its settings.','info',4000);
-	}
-	this.state.visibility.inspector = true;
-	return true;
-}
-*/
-
 VizorUI.prototype.openPresetSaveDialog = function(serializedGraph) {
 
 	var that = this;	// e2.app

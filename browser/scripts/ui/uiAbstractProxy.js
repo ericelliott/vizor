@@ -1,3 +1,6 @@
+// bridge obj.propertyName and domElement
+// so that UI interaction on domElement results in obj.propertyName being updated
+
 var UIAbstractProxy = function(obj, propertyName, domElement, onChange) {
 
 	var that = this

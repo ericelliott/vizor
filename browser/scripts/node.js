@@ -278,7 +278,7 @@ Node.prototype.setInputSlotValue = function(name, value) {
 Node.prototype.getDefaultSlotValue = function(slot) {
 	var name = slot.name
 
-	// try by definition
+	// try by editlog
 	if (this.uiSlotValues &&  this.uiSlotValues[name] !== undefined)
 		return this.uiSlotValues[name]
 
@@ -293,6 +293,7 @@ Node.prototype.getDefaultSlotValue = function(slot) {
 Node.prototype.getInputSlotValue = function(name) {
 	if (this.plugin.inputValues &&  this.plugin.inputValues[name] !== undefined)
 		return this.plugin.inputValues[name]
+	// else
 	var slot = this.findInputSlotByName(name)
 	return this.getDefaultSlotValue(slot)
 }
@@ -788,7 +789,7 @@ Node.prototype.initialise = function() {
 }
 
 Node.prototype.getInspectorStateProps = function() {
-	// get any state properties my plugin advertises and from each such prop make a proxy
+	// get any state properties my plugin allows ui to access and from each such prop make a proxy
 	if (typeof this.plugin.getInspectorProperties === 'undefined') return {}
 	var that = this, plugin = this.plugin, state = plugin.state
 	var props = plugin.getInspectorProperties()
@@ -815,7 +816,7 @@ Node.prototype.getInspectorStateProps = function() {
 }
 
 Node.prototype.getInspectorSlotProps = function() {
-	// get any slots my plugin advertises and for each such slot make a proxy
+	// get any slots my plugin allows ui to access and for each such slot make a proxy
 	if (typeof this.plugin.getInspectorSlotNames === 'undefined') return {}
 	var that = this
 	var slots = this.plugin.getInspectorSlotNames()

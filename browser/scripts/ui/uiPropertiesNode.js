@@ -109,7 +109,7 @@ UINodeProperties.prototype.getAdapter = function() {
 }
 
 // we can read direct from the proxy, but setting the values has to go via the graph API
-// and updating when the node actually changes its input slot value (via graph call)
+// when the node actually changes its input slot value (via graph call / event), control must update
 UINodeProperties.uifySlotProxy = function(node, slotName, inspectorSlotProxy) {	//
 	var proxy = inspectorSlotProxy
 	Object.defineProperty(proxy, 'value', {
@@ -163,8 +163,8 @@ UINodeProperties.prototype.getControls = function() {
 		var prop = props[propName]
 		var control = new controlType(prop, 'value', null, onChange)
 
-		var changeHandler = function(slot){
-			if (slot.name && slot.name !== propName) return	// this is a slot and it's not for us
+		var changeHandler = function(key){
+			if (key.name && key.name !== propName) return	// this is a slot and it's not for us
 			control.onSourceChange()
 		}
 		control.__attach = control.attach

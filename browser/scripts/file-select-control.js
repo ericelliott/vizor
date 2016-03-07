@@ -100,7 +100,7 @@ FileSelectControl.prototype.files = function(files) {
 
 FileSelectControl.prototype.selected = function(file) {
 	this._original = file
-	this._obj = file
+	this._selected = file
 	return this
 }
 
@@ -143,7 +143,7 @@ FileSelectControl.prototype._renderFiles = function()
 			if (!file.url)
 				file.url = file.path;
 
-			file.selected = (file.path === that._obj);
+			file.selected = (file.path === that._selected);
 			if (!file.name)
 				file.name = file.path.substring(file.path.lastIndexOf('/')+1);
 			file.updatedAt = moment(file.updatedAt).fromNow();

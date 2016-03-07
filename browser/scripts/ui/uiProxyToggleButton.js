@@ -30,7 +30,7 @@ UIToggleButton.prototype.getAdapter = function(){
 UIToggleButton.prototype.newElement = function() {
 	var domElement = document.createElement('BUTTON')
 	domElement.dataset.state = 'off'
-	domElement.dataset.className = 'uiToggle'
+	domElement.className = 'uiToggle'
 	return domElement
 }
 

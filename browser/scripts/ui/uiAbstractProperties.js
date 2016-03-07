@@ -1,10 +1,6 @@
 /**
- * exposes a set of properties belonging to the selected object or node, on a UI dom surface (a panel)
- * the canonical variables are the object/node's internal (state) variables
- * the UI dom elements are slaved to them.
- * this panel listens to appropriate changes and brings them to the UI
- * the panel's controls set properties on its adapter on domElement onChange/onInput events.
- * @constructor
+ * exposes in UI a set of properties belonging to the selected object or node
+ * these are wired via get/set proxies
  */
 var UIAbstractProperties = function(domElement) {
 	EventEmitter.apply(this, arguments)
@@ -16,14 +12,14 @@ var UIAbstractProperties = function(domElement) {
 
 	this._nodes = null	// holds selection
 
-	// holds references to DOM elements tied to this.adapter properties
 	this.dom = {
 		container: null		// typically $(domElement)
 	}
-	// holds references to any custom UI control objects, controlling this.adapter via this.dom events
+
+	// holds references to any custom UI control objects, controlling this.adapter via dom events
 	this.controls = {}
 
-	// will be set at render-time, to allow nodes to expose properties
+	// collects exposed properties. set at render-time
 	this.adapter = null
 
 	Object.defineProperty(this, 'selected', {
@@ -35,6 +31,8 @@ var UIAbstractProperties = function(domElement) {
 		}
 	})
 	this.selected = []
+
+	// convenience methods
 
 	Object.defineProperty(this, 'isInBuildMode', {
 		get: function() {
@@ -60,7 +58,6 @@ UIAbstractProperties.prototype.onUndo = function() {
 	this.render()
 }
 UIAbstractProperties.prototype.onRedo = UIAbstractProperties.prototype.onUndo
-//UIAbstractProperties.prototype.onModeChanged = function() {this.render()}
 
 UIAbstractProperties.prototype.setSelected = function(nodes) {
 	if (!(nodes && (typeof nodes.length !== 'undefined')))
@@ -71,14 +68,15 @@ UIAbstractProperties.prototype.setSelected = function(nodes) {
 	return this
 }
 
+// currently selected node in ui state
 UIAbstractProperties.prototype.getSelectedNodeRef = function() {
 	return (E2.ui.state.selectedObjects.length === 1) ? E2.ui.state.selectedObjects[0] : null
 }
-
+// currently selected single (3d editor) object as we see it
 UIAbstractProperties.prototype.getSelectedSingleRef = function() {
 	return (this.selected && this.selected.length && this.selected.length === 1 && this.selected[0])  ? this.selected[0] : null
 }
-
+// pointer to currently selected 3d editor object's state
 UIAbstractProperties.prototype.getSelectionStatePtr = function() {
 	return (this.selected && this.selected.length && this.selected.length>0)  ? this.selected[0].state : null
 }
@@ -88,9 +86,8 @@ UIAbstractProperties.prototype.onSelectedObjectChangedState = function() {
 	this.update()
 }
 
-/**
- * sometimes we need to wait the graph to complete a cycle so we request a call on next frame
- */
+
+// sometimes we need to wait the graph to complete a cycle so we request a call on next frame
 UIAbstractProperties.prototype.queueUpdate = function() {
 	if (this.updateQueued) return
 	this.updateQueued = true
@@ -101,7 +98,8 @@ UIAbstractProperties.prototype.queueUpdate = function() {
 	})
 }
 
-UIAbstractProperties.prototype.render = function() {	// hard-resets panel clearing container and rerendering template
+// resets panel, clearing container, refreshing adapter, and controls, and rerendering template
+UIAbstractProperties.prototype.render = function() {
 	this._detach()
 	var canRender = this.selected && this.selected.length === 1
 	if (canRender) {
@@ -163,13 +161,10 @@ UIAbstractProperties.prototype._reset = function() {	// resets handling, clears 
 
 /********* methods to implement ***********/
 
-/* strongly recommend implementing */
+/* recommend implementing */
 				UIAbstractProperties.prototype.getTemplateData = function() {return this.adapter}
-/**
- * the adapter bridges values for the selected object's state and the properties' UI controls
- * get() returns the authoritative source e.g. the object's properties
- * set() updates both the object and the UI display
- */
+
+// the adapter bridges values for the selected object's state or properties, and the UI controls
 /* @abstract */ UIAbstractProperties.prototype.getAdapter = function() {return {}}
 /* @abstract */ UIAbstractProperties.prototype.getControls = function() {return {}}
 /* @abstract */ UIAbstractProperties.prototype.onAttach 	= function() {}
